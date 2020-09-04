@@ -10,7 +10,7 @@ public class TravelingSealmanProblem {
 
     static {
         pointPositions = new Point[8];
-        addPoint(0, 5.0, 6.0, "A");
+        addPoint(0, 5.0, 6.0, "Super");
         addPoint(1, 2.0, 7.0, "B");
         addPoint(2, 10.0, 5.0, "C");
         addPoint(3, 0.0, 4.0, "D");
@@ -47,7 +47,7 @@ public class TravelingSealmanProblem {
 
     public static void dealProblem() {
 
-        System.out.println("First city is A");
+        System.out.println("First city is Super");
         int currentPointIndex = 0;
 
         // 当只剩一个点时循环即可结束

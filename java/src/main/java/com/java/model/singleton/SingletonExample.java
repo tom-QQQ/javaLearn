@@ -8,7 +8,9 @@ package com.java.model.singleton;
 public class SingletonExample {
 
     /**
-     * volatile关键字确保当singletonExample被初始化为实例时, 多个线程能正确地处理该变量
+     * volatile关键字确保当singletonExample被初始化为实例时, 相关的初始化操作可以顺序执行(主要是第28行代码编译后会变成3行代码(分配
+     *  内存空间, 初始化对象, 设置instance指向之前刚才分配对象的内存地址), 没有volatile的修饰, 这3行代码可能会进行指令重排,
+     * 造成先指向对象内存地址, 再初始化对象, 就可能有线程只拿到了一个未初始化完成的对象)
      */
     private volatile static SingletonExample singletonExample;
 

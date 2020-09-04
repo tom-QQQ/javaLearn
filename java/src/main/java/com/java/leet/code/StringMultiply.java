@@ -126,12 +126,12 @@ public class StringMultiply {
     }
 
     public static void main(String[] args) {
-//        StringMultiply stringMultiply = new StringMultiply();
-//        System.out.println(stringMultiply.multiply("9999999", "9999999"));
+        StringMultiply stringMultiply = new StringMultiply();
+        System.out.println(stringMultiply.multiply("9999999", "9999999"));
 //        System.out.println(stringMultiply.multiplyNew("9999999", "9999999"));
 
-        String str = "abc";
-        System.out.println(str.concat("444"));
+//        String str = "abc";
+//        System.out.println(str.concat("444"));
 
 
     }

@@ -31,7 +31,7 @@ public class CreateSql {
 
         for (String str : params) {
 
-            System.out.println("<if test=\"" + str + " != null\">");
+            System.out.println("<if tests=\"" + str + " != null\">");
 
             if (str.contains("startTime") || str.contains("min")) {
                 System.out.println("    and " + tableName + "." + humpToUnderline(str) + " &gt;= #{" + str + "}");
@@ -56,7 +56,7 @@ public class CreateSql {
 
         for (String str : params) {
 
-            System.out.println("<if test=\"" + str + " != null\">");
+            System.out.println("<if tests=\"" + str + " != null\">");
 
             System.out.println("    and " + tableName + "." + humpToUnderline(str) + " like CONCAT('%', #{" + str + "}, '%')");
 
