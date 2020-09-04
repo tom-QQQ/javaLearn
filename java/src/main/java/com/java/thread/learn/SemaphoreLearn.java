@@ -13,7 +13,7 @@ public class SemaphoreLearn {
 
     public static void main(String[] args) throws Exception {
 
-        // 构造参数为最多允许线程访问的数量, 另外一个构造器的参数多一个公平锁的boolean值, 默认创建非公平
+        // 使用构造器构造, 参数为最多允许线程访问的数量, 可以补充参数构建公平信号量
         Semaphore semaphore = new Semaphore(4);
 
 

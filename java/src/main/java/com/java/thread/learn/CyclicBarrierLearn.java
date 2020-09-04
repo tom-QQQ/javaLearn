@@ -18,7 +18,7 @@ public class CyclicBarrierLearn {
 
     public static void main(String[] args) throws Exception {
 
-        // 构建回环栅栏
+        // 自定义构建回环栅栏
         CyclicBarrier cyclicBarrier = createCyclicBarrier();
 
         /**
@@ -115,8 +115,9 @@ public class CyclicBarrierLearn {
 
     /**
      * 第一个参数指定等待的线程数量
-     * 第二个参数是全部线程前半部分任务执行完成后, 还需要执行的任务, 会分配给某一个线程完成
-     * 每指定个线程的前半部分任务执行完成, 都会让某个线程执行一次这里的任务, 然后再执行后半部分任务
+     * 第二个参数是全部线程指定部分任务执行完成后, 还需要执行一次的任务
+     *
+     * 每指定个线程的指定部分任务执行完成, 都会让其中某个线程执行一次这里的任务, 然后再一起执行之后的任务
      * 如果剩余的线程小于等待线程的数量, 则这些线程后半部分任务无法执行完成
      * @return 回环栅栏
      */

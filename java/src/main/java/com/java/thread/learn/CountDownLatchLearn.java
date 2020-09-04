@@ -14,7 +14,7 @@ public class CountDownLatchLearn {
 
     public static void main(String[] args) throws Exception {
 
-        // 构建计数器参数
+        // 构造器构建计数器参数
         CountDownLatch latch = new CountDownLatch(taskNum);
 
         /**
