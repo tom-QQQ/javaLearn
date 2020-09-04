@@ -9,15 +9,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class CountDownLatchLearn {
 
+    private static int taskNum = 3;
+
     /**
      * 计数器, 小于等于0时执行才能之后的逻辑
      */
-    private static CountDownLatch latch = new CountDownLatch(3);
+    private static CountDownLatch latch = new CountDownLatch(taskNum);
 
     /**
      * 确保每次只被一个线程修改
      */
-    private static AtomicInteger count = new AtomicInteger(3);
+    private static AtomicInteger count = new AtomicInteger(taskNum);
 
     public static void countdown() {
 

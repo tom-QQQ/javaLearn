@@ -2,6 +2,10 @@ package com.java.thread;
 
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -30,17 +34,23 @@ public class ThreadPool {
                 if (threadPoolTaskExecutor == null) {
 
                     threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
-                    threadPoolTaskExecutor.setCorePoolSize(20);
-                    threadPoolTaskExecutor.setMaxPoolSize(30);
+                    threadPoolTaskExecutor.setCorePoolSize(13);
+                    threadPoolTaskExecutor.setMaxPoolSize(25);
                     threadPoolTaskExecutor.setQueueCapacity(2048);
                     // 设置任务数量超过队列长度的处理策略, 抛弃任务
                     threadPoolTaskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
                     threadPoolTaskExecutor.setKeepAliveSeconds(20);
+
                     // 设置线程池被销毁时, 如果有子线程任务未执行完成, 则继续执行任务
                     threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(true);
-                    // 等待子线程执行完成的最长时间
+                    // 线程池销毁前等待子线程执行完成的最长时间, 不设置默认一直等待
                     threadPoolTaskExecutor.setAwaitTerminationSeconds(60);
                     threadPoolTaskExecutor.initialize();
+
+                    /**
+                     * 设置线程名前缀, 在线程名打印{@link #currentThreadName}时显示的就是 "线程"+"线程名前缀"+"线程编号"
+                     */
+                    threadPoolTaskExecutor.setThreadNamePrefix("");
                     return threadPoolTaskExecutor;
                 }
             }
@@ -62,8 +72,10 @@ public class ThreadPool {
 //        }
 
         // 必须销毁线程池, 否则执行不会停止
+        // 这里仅仅是发起了线程池销毁, 如果配置了如果线程池配置了waitForJobsToCompleteOnShutdown为true,
+        // 则只有当线程池内的线程的任务执行完成后或到超时时间才会真正销毁线程池
         ThreadPool.getInstance().destroy();
-        System.out.println('\n' + "线程池销毁完成");
+        System.out.println('\n' + "线程池发起销毁操作");
     }
 
     /**
@@ -77,7 +89,7 @@ public class ThreadPool {
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(ThreadPool.currentThreadName().concat("被中断"));
+            System.out.println(ThreadPool.currentThreadName().concat("被中断了"));
         }
     }
 
@@ -87,6 +99,6 @@ public class ThreadPool {
      */
     public static String currentThreadName() {
 
-        return "线程".concat(Thread.currentThread().getName());
+        return "线程".concat(Thread.currentThread().getName().concat(" "));
     }
 }

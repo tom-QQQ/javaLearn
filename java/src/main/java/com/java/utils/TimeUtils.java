@@ -1,7 +1,8 @@
 package com.java.utils;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -10,18 +11,18 @@ import java.util.List;
  */
 public class TimeUtils {
 
-//    public static String compareDate(Date stateDate, Date endDate) {
-//
-//
-//        Calendar startCalender = Calendar.getInstance();
-//        startCalender.setTime(stateDate);
-//        Calendar endCalender = Calendar.getInstance();
-//        endCalender.setTime(endDate);
-//
-//
-//
-//    }
+    private static DateFormat formatter = new SimpleDateFormat("HH:mm:ss.SSS");
 
+
+    public static String getLocalTime() {
+        return formatter.format(new Date());
+    }
+
+    /**
+     * 毫秒转年日时分秒毫秒
+     * @param millisecond 毫秒
+     * @return 年日时分秒
+     */
     public static String cycle(long millisecond) {
 
         int[] arrays = new int[]{1000, 60, 60, 24, 365};
@@ -64,6 +65,6 @@ public class TimeUtils {
 
     public static void main(String[] args) {
 
-        System.out.println(TimeUtils.cycle(82001455000L));
+        System.out.println(TimeUtils.cycle(82001455111L));
     }
 }
