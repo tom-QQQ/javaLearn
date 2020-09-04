@@ -71,7 +71,7 @@ public class ThreadPool {
 //            sleep(50);
 //        }
 
-        // 必须销毁线程池, 否则执行不会停止
+        // 必须销毁线程池, 否则程序执行不会停止
         // 这里仅仅是发起了线程池销毁, 如果配置了如果线程池配置了waitForJobsToCompleteOnShutdown为true,
         // 则只有当线程池内的线程的任务执行完成后或到超时时间才会真正销毁线程池
         ThreadPool.getInstance().destroy();
@@ -89,7 +89,7 @@ public class ThreadPool {
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(ThreadPool.currentThreadName().concat("被中断了"));
+            System.out.println(ThreadPool.currentThreadName("被中断了"));
         }
     }
 
@@ -97,8 +97,8 @@ public class ThreadPool {
      * 获取当前线程名
      * @return 当前线程名
      */
-    public static String currentThreadName() {
+    public static String currentThreadName(String content) {
 
-        return "线程".concat(Thread.currentThread().getName().concat(" "));
+        return "线程".concat(Thread.currentThread().getName().concat(" ").concat(content));
     }
 }

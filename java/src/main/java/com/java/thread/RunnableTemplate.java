@@ -9,6 +9,18 @@ import java.lang.reflect.Method;
  */
 public class RunnableTemplate {
 
+    public static void main(String[] args) throws Exception {
+
+        /**
+         * 执行多线程任务{@link #countdown}
+         */
+        runThreadTask();
+
+
+        // 销毁线程池
+        ThreadPool.destroyThreadPool();
+    }
+
     public static void countdown() {
 
         Runnable runnable = () -> {
@@ -18,30 +30,35 @@ public class RunnableTemplate {
 
                 try {
 
-                    // 执行逻辑
+                    // 执行任务
+                    task();
+
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    System.out.println(ThreadPool.currentThreadName().concat("出现异常"));
+                    System.out.println(ThreadPool.currentThreadName("出现异常"));
 
                 }
             }
         };
 
-        ThreadPool.getInstance().execute(runnable);
-        ThreadPool.getInstance().execute(runnable);
-        ThreadPool.getInstance().execute(runnable);
+        // 使用自定义线程池创建的子线程数量
+        for (int i = 0; i < 3; i++) {
+            ThreadPool.getInstance().execute(runnable);
+        }
     }
 
+    private static void task() {
+        ThreadPool.sleep(1000);
+        System.out.println(ThreadPool.currentThreadName("完成任务"));
+    }
 
     @SuppressWarnings("all")
-    public static void main(String[] args) throws Exception {
+    private static void runThreadTask() throws Exception {
 
         Class clazz = ClassUtils.getCurrentClass();
         Method method = clazz.getMethod("countdown");
+        // 使用类名.方法名调用静态方法
         method.invoke(clazz);
-        System.out.println("完成任务");
-
-        ThreadPool.destroyThreadPool();
     }
 }
