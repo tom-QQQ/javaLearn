@@ -44,7 +44,7 @@ public class SemaphoreLearn {
 
 
 
-                // 获取信号量以执行之后的逻辑, 未获取时到会一直等待, 这里获取多少个, 之后就要释放多少个
+                // 获取信号(可用信号量减一)量以执行之后的逻辑, 未获取时到会一直等待, 这里获取多少个, 之后就要释放多少个
                 semaphore.acquire(semaphoreNum);
 
 
@@ -54,7 +54,7 @@ public class SemaphoreLearn {
 
 
 
-                // 释放获取的信号量, 必须和之前获取信号量的数量相同
+                // 释放获取(可用信号量加一, 可能会超过初始的信号量)的信号量, 必须和之前获取信号量的数量相同
                 semaphore.release(semaphoreNum);
 
 

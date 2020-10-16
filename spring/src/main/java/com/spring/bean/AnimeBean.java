@@ -7,7 +7,6 @@ import lombok.Data;
  * @date Create in 2018/12/29
  * '@Data'会重写toString(), equals(), hashCode()方法
  */
-@Data
 public class AnimeBean {
 
     private String name = "青春猪头少年不会遇到兔女郎学姐";
@@ -36,4 +35,6 @@ public class AnimeBean {
     public void setPeriod(String period) {
         this.period = period;
     }
+
+
 }
