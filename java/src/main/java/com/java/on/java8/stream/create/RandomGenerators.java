@@ -3,6 +3,9 @@ package com.java.on.java8.stream.create;
 import java.util.Random;
 import java.util.stream.Stream;
 
+/**
+ * 随机数生成流
+ */
 public class RandomGenerators {
 
     public static <T> void show(Stream<T> stream) {
@@ -12,9 +15,7 @@ public class RandomGenerators {
         System.out.println("++++++++");
     }
 
-    // 随机数流
     public static void main(String[] args) {
-
 
         Random rand = new Random(47);
         // box实现方法mapToObj(Integer/Long/Double::valueOf), 会根据不同数据类型有不同的实现

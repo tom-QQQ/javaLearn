@@ -4,6 +4,9 @@ import com.java.on.java8.stream.Bubble;
 
 import java.util.stream.Stream;
 
+/**
+ * 数组转流
+ */
 public class StreamOf {
 
     public static void main(String[] args) {

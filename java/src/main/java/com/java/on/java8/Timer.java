@@ -13,7 +13,7 @@ public class Timer {
 
     public long duration() {
         long spendTime = new Date().getTime() - startTime;
-//        System.out.println("耗时".concat(String.valueOf(spendTime)));
+        System.out.println("耗时".concat(String.valueOf(spendTime)));
         return spendTime;
     }
 }

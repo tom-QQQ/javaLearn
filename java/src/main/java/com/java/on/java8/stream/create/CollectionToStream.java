@@ -4,6 +4,9 @@ import com.java.on.java8.stream.Bubble;
 
 import java.util.*;
 
+/**
+ * 集合转流
+ */
 public class CollectionToStream {
 
     public static void main(String[] args) {
