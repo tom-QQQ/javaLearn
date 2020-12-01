@@ -15,37 +15,38 @@ public class ChangeCode {
 
     public static void main(String[] args) throws Exception {
 
-        List<String> interfaceFiles = new ArrayList<>();
-        List<String> implFiles = new ArrayList<>();
+//        List<String> interfaceFiles = new ArrayList<>();
+//        List<String> implFiles = new ArrayList<>();
+//
+//        File interfaceFile = new File("D:\\learnBySelf\\code\\design_implementation\\aps-common\\src\\main\\java\\com" +
+//                "\\changhong\\core\\facade\\api\\merchant\\query\\BankCardQueryAppservice.java");
+//        addFiles(interfaceFile, interfaceFiles);
+//        System.out.println("");
+//
+//        File implFile = new File("D:\\learnBySelf\\code\\design_implementation\\aps-core-boot\\src\\main\\java\\com" +
+//                "\\ylink\\aps\\core\\biz\\merchant\\BankCardQueryAppServiceImpl.java");
+//
+//        addFiles(implFile, implFiles);
+//
+//        Map<String, String> map = implFiles.stream().filter(s -> s.contains("Impl")).collect(
+//                Collectors.toMap(s -> s.substring(s.lastIndexOf("\\") + 1).replace("Impl", ""), s -> s));
+//
+//        for (String interfacePath : interfaceFiles) {
+//
+//            String interfaceName= interfacePath.substring(interfacePath.lastIndexOf("\\") + 1);
+//            if (!map.containsKey(interfaceName)) {
+//                continue;
+//            }
+//
+//            List<String> methodsName = changeInterfaceCode(interfacePath);
+//
+//            changeImplCode(map.get(interfaceName), methodsName);
+//        }
 
-        File interfaceFile = new File("D:\\learnBySelf\\code\\design_implementation\\aps-common\\src\\main\\java\\com" +
-                "\\changhong\\core\\facade\\api\\invest");
-        addFiles(interfaceFile, interfaceFiles);
-
-        File implFile = new File("D:\\learnBySelf\\code\\design_implementation\\aps-core-boot\\src\\main\\java\\com" +
-                "\\ylink\\aps\\core\\biz\\invest");
-
-        addFiles(implFile, implFiles);
-
-        Map<String, String> map = implFiles.stream().filter(s -> s.contains("Impl")).collect(
-                Collectors.toMap(s -> s.substring(s.lastIndexOf("\\") + 1).replace("Impl", ""), s -> s));
-
-        for (String interfacePath : interfaceFiles) {
-
-            String interfaceName= interfacePath.substring(interfacePath.lastIndexOf("\\") + 1);
-            if (!map.containsKey(interfaceName)) {
-                continue;
-            }
-
-            List<String> methodsName = changeCode(interfacePath);
-
-            changeImplCode(map.get(interfaceName), methodsName);
-        }
-
-//        List<String> methodsName = changeCode("D:\\learnBySelf\\code\\design_implementation\\aps-common\\src\\main\\java\\com\\changhong\\core" +
-//                "\\facade\\api\\institution\\InstitutionAppService.java");
-//        changeImplCode("D:\\learnBySelf\\code\\design_implementation\\aps-core-boot\\src\\main\\java\\com\\ylink\\aps" +
-//                "\\core\\biz\\institution\\InstitutionAppServiceImpl.java", methodsName);
+        List<String> methodsName = changeInterfaceCode("D:\\learnBySelf\\code\\design_implementation\\aps-common\\src" +
+                "\\main\\java\\com\\changhong\\core\\facade\\api\\merchant\\MchChannelRegisterAppService.java");
+        changeImplCode("D:\\learnBySelf\\code\\design_implementation\\aps-core-boot\\src\\main\\java\\com\\ylink\\aps" +
+                "\\core\\biz\\merchant\\MchChannelRegisterAppServiceImpl.java", methodsName);
     }
 
     /**
@@ -106,13 +107,13 @@ public class ChangeCode {
 
             if (!isOnlyAddChPayRequestBody && lines.get(index).startsWith("@Service")) {
                 result.add("@RestController");
-                index++;
                 result.add("//" + lines.get(index));
+                index++;
             }
 
             if (!isOnlyAddChPayRequestBody && lines.get(index).startsWith("@Component")) {
-                index++;
                 result.add("//" + lines.get(index));
+                index++;
             }
 
             // 统一去除@Override注解, 之后再补充, 防止有些实现方法没加@Override注解
@@ -163,7 +164,7 @@ public class ChangeCode {
         fileWriter.close();
     }
 
-    public static List<String> changeCode(String filePath) throws Exception {
+    public static List<String> changeInterfaceCode(String filePath) throws Exception {
 
         List<String> methodsName = new ArrayList<>();
 
@@ -206,7 +207,10 @@ public class ChangeCode {
                 interfaceLine = index;
             }
 
-            if (interfaceLine > 0 && index > interfaceLine && lines.get(index).contains("(") && !lines.get(index).contains("*")) {
+            if (interfaceLine > 0 && index > interfaceLine &&
+                    lines.get(index).contains("(") &&
+                    // 排除注释的干扰
+                    !(lines.get(index).contains("*") || lines.get(index).contains("//"))) {
 
                 // 补充方法注解
                 if (!isOnlyAddChPayRequestBody) {
@@ -215,6 +219,8 @@ public class ChangeCode {
 
                 // 获取完整的方法代码
                 String methodStr = lines.get(index);
+                // 去除接口方法多余的public和空格
+                methodStr = methodStr.replace("public ", "");
                 // 记录方法名
                 methodsName.add(getMethodName(methodStr));
 
@@ -295,7 +301,7 @@ public class ChangeCode {
                 .concat(code.substring(leftBracketsIndex+1));
 
         // 使用逗号定位, 并排除可能存在的返回类型的泛型逗号, 暂未处理第二个及之后的参数为多泛型的情况, 如Map<String, String>
-        int commaIndex = code.indexOf(",", leftBracketsIndex);
+        int commaIndex = findParamComma(code);
         if (commaIndex < 0) {
             results.add(code);
             return;
@@ -311,7 +317,7 @@ public class ChangeCode {
 
         while (true) {
 
-            commaIndex = code.indexOf(",");
+            commaIndex = findParamComma(code);
             if (commaIndex < 0) {
                 result = result.concat("@ChPayRequestBody ").concat(code);
                 break;
@@ -326,10 +332,44 @@ public class ChangeCode {
         results.add(result);
     }
 
-//    private int findParamComma(String code) {
-//
-//
-//    }
+    /**
+     * 找到参数后面的逗号,而不是泛型中的逗号
+     * @param code 代码
+     * @return 参数后面逗号的索引
+     */
+    private static int findParamComma(String code) {
+
+        int firstCommaIndex = code.indexOf(",");
+
+        if (firstCommaIndex < 0) {
+            return firstCommaIndex;
+        }
+
+        int nextCommaIndex;
+
+        while (true) {
+
+            nextCommaIndex = code.indexOf(",", firstCommaIndex+1);
+            if (nextCommaIndex == -1) {
+                nextCommaIndex = code.indexOf(")");
+            }
+
+            String containsCommaCode = code.substring(firstCommaIndex);
+
+            // 根据泛型中的尖括号数量判断逗号是泛型的逗号还是参数后面的逗号
+            if (containsCommaCode.split("<").length == containsCommaCode.split(">").length) {
+
+                // 2个索引相同, 此时泛型参数为最后一个参数, 直接返回-1
+                if (firstCommaIndex == nextCommaIndex) {
+                    return -1;
+                }
+                // 否则返回泛型参数后逗号的索引
+                return firstCommaIndex;
+            }
+
+            firstCommaIndex = nextCommaIndex;
+        }
+    }
 
     /**
      * 判断实现类方法是否是接口的方法
