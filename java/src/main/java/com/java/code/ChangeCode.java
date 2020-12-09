@@ -15,38 +15,134 @@ public class ChangeCode {
 
     public static void main(String[] args) throws Exception {
 
-//        List<String> interfaceFiles = new ArrayList<>();
-//        List<String> implFiles = new ArrayList<>();
-//
-//        File interfaceFile = new File("D:\\learnBySelf\\code\\design_implementation\\aps-common\\src\\main\\java\\com" +
-//                "\\changhong\\core\\facade\\api\\merchant\\query\\BankCardQueryAppservice.java");
-//        addFiles(interfaceFile, interfaceFiles);
-//        System.out.println("");
-//
-//        File implFile = new File("D:\\learnBySelf\\code\\design_implementation\\aps-core-boot\\src\\main\\java\\com" +
-//                "\\ylink\\aps\\core\\biz\\merchant\\BankCardQueryAppServiceImpl.java");
-//
-//        addFiles(implFile, implFiles);
-//
-//        Map<String, String> map = implFiles.stream().filter(s -> s.contains("Impl")).collect(
-//                Collectors.toMap(s -> s.substring(s.lastIndexOf("\\") + 1).replace("Impl", ""), s -> s));
-//
-//        for (String interfacePath : interfaceFiles) {
-//
-//            String interfaceName= interfacePath.substring(interfacePath.lastIndexOf("\\") + 1);
-//            if (!map.containsKey(interfaceName)) {
-//                continue;
-//            }
-//
-//            List<String> methodsName = changeInterfaceCode(interfacePath);
-//
-//            changeImplCode(map.get(interfaceName), methodsName);
-//        }
 
-        List<String> methodsName = changeInterfaceCode("D:\\learnBySelf\\code\\design_implementation\\aps-common\\src" +
-                "\\main\\java\\com\\changhong\\core\\facade\\api\\merchant\\MchChannelRegisterAppService.java");
-        changeImplCode("D:\\learnBySelf\\code\\design_implementation\\aps-core-boot\\src\\main\\java\\com\\ylink\\aps" +
-                "\\core\\biz\\merchant\\MchChannelRegisterAppServiceImpl.java", methodsName);
+        changeCode("D:\\learnBySelf\\code\\design_implementation\\aps-common\\src\\main\\java\\com\\ylink\\aps\\app" +
+                        "\\workflow",
+
+                "D:\\learnBySelf\\code\\design_implementation\\aps-core-boot\\src\\main\\java\\com\\ylink\\aps" +
+                        "\\workflow\\app",
+
+                false);
+
+
+//        List<String> methodsName = changeInterfaceCode("D:\\learnBySelf\\code\\design_implementation\\aps-common\\src" +
+//                "\\main\\java\\com\\changhong\\core\\facade\\api\\pinganjzb\\JzbMemberRechargeAppService.java");
+//        changeImplCode("D:\\learnBySelf\\code\\design_implementation\\aps-core-boot\\src\\main\\java\\com\\ylink\\aps" +
+//                "\\core\\biz\\pinganjzb\\JzbMemberRechargeAppSerivceImpl.java", methodsName);
+    }
+
+    /**
+     * 未修改过的代码补充注解
+     * @param interfaceRootPath 接口目录
+     * @param implRootPath 实现类目录
+     * @param isChanged 代码是否已经修改过
+     * @throws Exception 异常
+     */
+    private static void changeCode(String interfaceRootPath, String implRootPath, boolean isChanged) throws Exception {
+
+        List<String> interfaceFiles = new ArrayList<>();
+        List<String> implFiles = new ArrayList<>();
+
+        File interfaceFile = new File(interfaceRootPath);
+        addFiles(interfaceFile, interfaceFiles);
+        System.out.println("");
+
+        File implFile = new File(implRootPath);
+
+        addFiles(implFile, implFiles);
+
+        Map<String, String> map = implFiles.stream().filter(s -> s.contains("Impl")).collect(
+                Collectors.toMap(s -> s.substring(s.lastIndexOf("\\") + 1)
+                        .replace("Impl", ""), s -> s));
+
+        for (String interfacePath : interfaceFiles) {
+
+            String interfaceName = interfacePath.substring(interfacePath.lastIndexOf("\\") + 1);
+            if (!map.containsKey(interfaceName)) {
+                continue;
+            }
+
+            if (isChanged) {
+
+                changeInterfaceCodeForPrimary(interfacePath);
+                changeImplCode(map.get(interfaceName));
+                continue;
+            }
+
+            List<String> methodsName = changeInterfaceCode(interfacePath);
+
+            changeImplCode(map.get(interfaceName), methodsName);
+        }
+    }
+
+    /**
+     * 补充primary = false
+     * @param filePath 文件路径
+     * @throws Exception 异常
+     */
+    private static void changeInterfaceCodeForPrimary(String filePath) throws Exception {
+
+        List<String> lines = getAllCode(filePath);
+        List<String> result = new LinkedList<>();
+
+        for (int index = 0; index < lines.size(); index++) {
+
+            if (lines.get(index).contains("@FeignClient")) {
+                result.add("@FeignClient(value = \"aps-core-boot\", configuration = ChPayFeignSupportConfig.class, " +
+                        "primary = false)");
+                index++;
+            }
+
+            result.add(lines.get(index));
+        }
+
+        // 写入文件
+        FileWriter fileWriter = new FileWriter(filePath);
+        for (String str : result) {
+            fileWriter.write(str + '\n');
+        }
+
+        fileWriter.close();
+    }
+
+    /**
+     * 给实现类补充@Primary注解
+     * @param filePath 实现类地址
+     * @throws Exception
+     */
+    private static void changeImplCode(String filePath) throws Exception {
+
+        List<String> lines = getAllCode(filePath);
+
+        List<String> result = new LinkedList<>();
+
+        for (int index = 0; index < lines.size(); index++) {
+
+            String line = lines.get(index);
+            if (line.contains("import com.changhong.boot.ChPayRequestBody;")) {
+                result.add("import org.springframework.context.annotation.Primary;");
+            }
+
+            if (line.contains("@RestController")) {
+                result.add(line);
+                line = lines.get(++index);
+                result.add("@Primary");
+            }
+
+            if (line.contains("@Service") || line.contains("@Component")) {
+                continue;
+            }
+
+            result.add(line);
+        }
+
+        // 写入文件
+        FileWriter fileWriter = new FileWriter(filePath);
+        for (String str : result) {
+            fileWriter.write(str + '\n');
+        }
+
+        fileWriter.close();
     }
 
     /**
@@ -100,6 +196,7 @@ public class ChangeCode {
                 if (!isOnlyAddChPayRequestBody) {
                     result.add("import com.changhong.boot.ChPayMapping;");
                     result.add("import org.springframework.web.bind.annotation.RestController;");
+                    result.add("import org.springframework.context.annotation.Primary;");
                 }
                 result.add("import com.changhong.boot.ChPayRequestBody;");
             }
@@ -107,12 +204,11 @@ public class ChangeCode {
 
             if (!isOnlyAddChPayRequestBody && lines.get(index).startsWith("@Service")) {
                 result.add("@RestController");
-                result.add("//" + lines.get(index));
+                result.add("@Primary");
                 index++;
             }
 
             if (!isOnlyAddChPayRequestBody && lines.get(index).startsWith("@Component")) {
-                result.add("//" + lines.get(index));
                 index++;
             }
 
@@ -120,8 +216,9 @@ public class ChangeCode {
             if (lines.get(index).contains("@Override")) {
                 index++;
                 // 补充非接口方法的@Override注解和已经添加好的@Override注解
-                if (!isInterfaceMethod(lines.get(index), methodsName) || isOnlyAddChPayRequestBody) {
-                    result.add("    @Override");
+                boolean needAddOverride = needAddOverride(lines, index, methodsName);
+                if (needAddOverride || isOnlyAddChPayRequestBody) {
+                    result.add("\t@Override");
                 }
             }
 
@@ -202,7 +299,8 @@ public class ChangeCode {
             // 补充接口注解
             if (lines.get(index).contains("public interface")) {
                 if (!isOnlyAddChPayRequestBody) {
-                    result.add("@FeignClient(value = \"aps-core-boot\", configuration = ChPayFeignSupportConfig.class)");
+                    result.add("@FeignClient(value = \"aps-core-boot\", configuration = ChPayFeignSupportConfig" +
+                            ".class, primary = false)");
                 }
                 interfaceLine = index;
             }
@@ -255,6 +353,28 @@ public class ChangeCode {
     }
 
     /**
+     * 判断是否需要单独添加@Override注解
+     * @param lines 代码
+     * @param overrideIndex 存在的@Override注解索引
+     * @param methodsName 接口方法名
+     * @return 是否应该添加@Override注解
+     */
+    private static boolean needAddOverride(List<String> lines, int overrideIndex, List<String> methodsName) {
+
+        while (true) {
+
+            // 排除其他注解和注释
+            if (lines.get(overrideIndex).contains("@") || lines.get(overrideIndex).contains("//") ||
+                    lines.get(overrideIndex).contains("*")) {
+                overrideIndex++;
+
+            } else {
+                return !isInterfaceMethod(lines.get(overrideIndex),methodsName);
+            }
+        }
+    }
+
+    /**
      * 读取文件的全部代码
      * @param filePath 文件路径
      * @return 分行代码
@@ -300,7 +420,7 @@ public class ChangeCode {
         code = code.substring(0, leftBracketsIndex+1).concat("@ChPayRequestBody ")
                 .concat(code.substring(leftBracketsIndex+1));
 
-        // 使用逗号定位, 并排除可能存在的返回类型的泛型逗号, 暂未处理第二个及之后的参数为多泛型的情况, 如Map<String, String>
+        // 使用逗号定位, 并排除可能存在的返回类型的泛型逗号
         int commaIndex = findParamComma(code);
         if (commaIndex < 0) {
             results.add(code);
@@ -354,6 +474,11 @@ public class ChangeCode {
                 nextCommaIndex = code.indexOf(")");
             }
 
+            // 逗号的索引
+            if (nextCommaIndex < firstCommaIndex) {
+                return -1;
+            }
+
             String containsCommaCode = code.substring(firstCommaIndex);
 
             // 根据泛型中的尖括号数量判断逗号是泛型的逗号还是参数后面的逗号
@@ -384,7 +509,7 @@ public class ChangeCode {
         }
 
         for (String str : methodsName) {
-            if (methodCode.contains(str)) {
+            if (methodCode.contains(str+"(")) {
                 return true;
             }
         }
