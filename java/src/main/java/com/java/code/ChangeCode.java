@@ -5,30 +5,178 @@ import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ChangeCode {
 
+    private static final String annotation = "@ChPayRequestBody";
+
     public static void main(String[] args) throws Exception {
 
 
-        changeCode("D:\\learnBySelf\\code\\design_implementation\\aps-common\\src\\main\\java\\com\\ylink\\aps\\app" +
-                        "\\device",
+        checkParams("D:\\learnBySelf\\code\\design_implementation\\aps-common\\src\\main\\java\\com\\changhong\\core" +
+                        "\\facade\\api",
 
-                "D:\\learnBySelf\\code\\design_implementation\\hibi-common\\src\\main\\java\\com\\ylink\\hibi\\base",
-
-                false);
+                "D:\\learnBySelf\\code\\design_implementation\\aps-core-boot\\src\\main\\java\\com\\ylink\\aps\\core" +
+                        "\\biz");
 
 
 //        List<String> methodsName = changeInterfaceCode("D:\\learnBySelf\\code\\design_implementation\\hibi-common" +
 //                "\\src\\main\\java\\com\\ylink\\hibi\\app\\settle\\query");
 //        changeImplCode("D:\\learnBySelf\\code\\design_implementation\\hibi-settle-boot\\src\\main\\java\\com" +
 //                "\\changhong\\hibi\\settle\\app\\query\\ProfitFeeAppServiceImpl.java", methodsName);
+    }
+
+    private static void checkParams(String interfaceRootPath, String implRootPath) {
+
+        List<String> interfaceFiles = new ArrayList<>();
+        List<String> implFiles = new ArrayList<>();
+
+        addFiles(interfaceRootPath, interfaceFiles);
+        System.out.println("");
+
+        addFiles(implRootPath, implFiles);
+
+        Map<String, String> map = implFiles.stream().filter(s -> s.contains("Impl")).collect(
+                Collectors.toMap(s -> s.substring(s.lastIndexOf("\\") + 1)
+                        .replace("Impl", ""), s -> s));
+
+        for (String interfacePath : interfaceFiles) {
+
+            String interfaceName = interfacePath.substring(interfacePath.lastIndexOf("\\") + 1);
+            if (!map.containsKey(interfaceName)) {
+                System.out.println("接口 " + interfaceName + " 的实现类不在路径 " + implRootPath  + " 内" + '\n');
+                continue;
+            }
+
+
+            checkMethodParams(interfacePath, map.get(interfaceName));
+        }
+    }
+
+    private static void checkMethodParams(String interfacePath, String implPath) {
+
+        String interfaceName = interfacePath.substring(interfacePath.lastIndexOf("\\") + 1, interfacePath.indexOf(
+                ".java"));
+
+        Map<String, String> interfaceMethodInfo = getMethodInfo(interfacePath);
+
+        Map<String, String> implMethodInfo = getMethodInfo(implPath);
+
+        for (Map.Entry<String, String> impl : implMethodInfo.entrySet()) {
+
+            String method = impl.getKey();
+            String interfaceParams = interfaceMethodInfo.get(method);
+            if (interfaceParams == null) {
+                System.out.println("接口 " + interfaceName + " 没有实现类的 " + method + " 方法" + '\n');
+                continue;
+            }
+            String implParams = impl.getValue();
+            if (!interfaceParams.equals(implParams)) {
+                System.out.println("接口 " + interfaceName + " 的方法 " + method + " 参数名与实现类方法参数名不同" + '\n');
+            }
+        }
+    }
+
+    /**
+     * 获取方法信息
+     * @param path 文件路径
+     * @return 方法信息
+     */
+    private static Map<String, String> getMethodInfo(String path) {
+
+        Map<String, String> result = new HashMap<>();
+
+        List<String> lines = getAllCode(path);
+
+        for (int index = 0; index < lines.size(); index++) {
+
+            String methodStr = lines.get(index);
+            if (methodStr.contains("@ChPayRequestBody")) {
+
+                // 获取完整的方法代码
+                if (!methodStr.contains(")")) {
+                    do {
+                        index++;
+                        methodStr = methodStr.concat(lines.get(index));
+                    } while (!methodStr.contains(")"));
+                }
+
+                getMethodInfo(methodStr, result, path);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * 根据方法代码获取方法名和参数名
+     * @param method 方法代码
+     * @param result 方法名-参数
+     */
+    private static void getMethodInfo(String method, Map<String, String> result, String path) {
+
+        String methodName = getMethodName(method);
+        Map<String, String> methodInfo = getMethodParamsName(method);
+        String params = methodInfo.get("params");
+        String num = methodInfo.get("num");
+
+        if (result.containsKey(methodName+num)) {
+            String interfaceName = path.substring(path.lastIndexOf("\\") + 1, path.indexOf(
+                    ".java"));
+            System.out.println("文件 " + interfaceName + " 方法 "+ methodName + " 存在方法名相同, 参数相同的方法, 需要手动检查" + '\n');
+
+        } else {
+            result.put(methodName+num, params);
+        }
+    }
+
+    /**
+     * 根据代码获取方法参数
+     * @param method 方法
+     * @return 方法参数
+     */
+    private static Map<String, String> getMethodParamsName(String method) {
+
+        StringBuilder params = new StringBuilder();
+        int paramNum = 0;
+
+        while (true) {
+
+            int annotationIndex = method.indexOf(annotation);
+
+            if (annotationIndex < 0) {
+                break;
+            }
+
+            method = method.substring(annotationIndex+annotation.length());
+            method = method.replaceFirst( "^\\s+", "");
+
+            int commonIndex = findParamComma(method);
+            if (commonIndex < 0) {
+
+                int bracketsIndex = method.indexOf(")");
+                // 右括号前的最后一个空格到右括号之间的是最后一个参数
+                String lastParamName = method.substring(method.substring(0, bracketsIndex).lastIndexOf(" "), bracketsIndex);
+                params.append(lastParamName.trim());
+                paramNum++;
+                break;
+            }
+
+            int startIndex = method.substring(0, commonIndex).lastIndexOf(" ") + 1;
+            String methodParam = method.substring(startIndex, commonIndex);
+            params.append(methodParam).append(",");
+            paramNum++;
+
+        }
+
+        Map<String, String> result = new HashMap<>();
+        result.put("params", params.toString());
+        result.put("num", String.valueOf(paramNum));
+
+        return result;
     }
 
     /**
@@ -178,7 +326,7 @@ public class ChangeCode {
 
         for (File f : files) {
             if (f.isDirectory()) {
-                addFiles(filePath, filesName);
+                addFiles(f.getAbsolutePath(), filesName);
             } else {
                 filesName.add(f.getAbsolutePath());
             }
@@ -401,7 +549,7 @@ public class ChangeCode {
             e.printStackTrace();
         }
 
-        throw new RuntimeException("文件写入失败");
+        throw new RuntimeException("文件读取失败");
 
     }
 
@@ -414,8 +562,17 @@ public class ChangeCode {
 
         int bracketsIndex = methodStr.indexOf("(");
 
-        int startIndex = methodStr.substring(0, bracketsIndex).lastIndexOf(" ");
-        return methodStr.substring(startIndex + 1, bracketsIndex);
+        try {
+
+            int startIndex = methodStr.substring(0, bracketsIndex).lastIndexOf(" ");
+            return methodStr.substring(startIndex + 1, bracketsIndex);
+
+        } catch (Exception e) {
+            System.out.println(methodStr);
+            e.printStackTrace();
+        }
+
+        throw new RuntimeException("出现异常");
     }
 
     /**
