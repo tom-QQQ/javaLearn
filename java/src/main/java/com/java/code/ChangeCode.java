@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ChangeCode {
@@ -17,25 +18,24 @@ public class ChangeCode {
 
 
         changeCode("D:\\learnBySelf\\code\\design_implementation\\aps-common\\src\\main\\java\\com\\ylink\\aps\\app" +
-                        "\\workflow",
+                        "\\device",
 
-                "D:\\learnBySelf\\code\\design_implementation\\aps-core-boot\\src\\main\\java\\com\\ylink\\aps" +
-                        "\\workflow\\app",
+                "D:\\learnBySelf\\code\\design_implementation\\hibi-common\\src\\main\\java\\com\\ylink\\hibi\\base",
 
                 false);
 
 
-//        List<String> methodsName = changeInterfaceCode("D:\\learnBySelf\\code\\design_implementation\\aps-common\\src" +
-//                "\\main\\java\\com\\changhong\\core\\facade\\api\\pinganjzb\\JzbMemberRechargeAppService.java");
-//        changeImplCode("D:\\learnBySelf\\code\\design_implementation\\aps-core-boot\\src\\main\\java\\com\\ylink\\aps" +
-//                "\\core\\biz\\pinganjzb\\JzbMemberRechargeAppSerivceImpl.java", methodsName);
+//        List<String> methodsName = changeInterfaceCode("D:\\learnBySelf\\code\\design_implementation\\hibi-common" +
+//                "\\src\\main\\java\\com\\ylink\\hibi\\app\\settle\\query");
+//        changeImplCode("D:\\learnBySelf\\code\\design_implementation\\hibi-settle-boot\\src\\main\\java\\com" +
+//                "\\changhong\\hibi\\settle\\app\\query\\ProfitFeeAppServiceImpl.java", methodsName);
     }
 
     /**
-     * 未修改过的代码补充注解
+     * 代码补充注解
      * @param interfaceRootPath 接口目录
      * @param implRootPath 实现类目录
-     * @param isChanged 代码是否已经修改过
+     * @param isChanged 代码是否已经修改过, 只需要给@FeignClient添加primary = false和给实现类补充@Primary注解
      * @throws Exception 异常
      */
     private static void changeCode(String interfaceRootPath, String implRootPath, boolean isChanged) throws Exception {
@@ -43,13 +43,10 @@ public class ChangeCode {
         List<String> interfaceFiles = new ArrayList<>();
         List<String> implFiles = new ArrayList<>();
 
-        File interfaceFile = new File(interfaceRootPath);
-        addFiles(interfaceFile, interfaceFiles);
+        addFiles(interfaceRootPath, interfaceFiles);
         System.out.println("");
 
-        File implFile = new File(implRootPath);
-
-        addFiles(implFile, implFiles);
+        addFiles(implRootPath, implFiles);
 
         Map<String, String> map = implFiles.stream().filter(s -> s.contains("Impl")).collect(
                 Collectors.toMap(s -> s.substring(s.lastIndexOf("\\") + 1)
@@ -76,81 +73,97 @@ public class ChangeCode {
     }
 
     /**
-     * 补充primary = false
-     * @param filePath 文件路径
-     * @throws Exception 异常
+     * 读写文件操作
+     * @param filePath 文件禄路径
+     * @param function 处理操作
      */
-    private static void changeInterfaceCodeForPrimary(String filePath) throws Exception {
+    private static void readAndWriteFile(String filePath, Function<List<String>, List<String>> function) {
 
         List<String> lines = getAllCode(filePath);
-        List<String> result = new LinkedList<>();
+        List<String> result = function.apply(lines);
 
-        for (int index = 0; index < lines.size(); index++) {
+        try {
 
-            if (lines.get(index).contains("@FeignClient")) {
-                result.add("@FeignClient(value = \"aps-core-boot\", configuration = ChPayFeignSupportConfig.class, " +
-                        "primary = false)");
-                index++;
+            // 写入文件
+            FileWriter fileWriter = new FileWriter(filePath);
+            for (String str : result) {
+                fileWriter.write(str + '\n');
             }
 
-            result.add(lines.get(index));
-        }
+            fileWriter.close();
 
-        // 写入文件
-        FileWriter fileWriter = new FileWriter(filePath);
-        for (String str : result) {
-            fileWriter.write(str + '\n');
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
 
-        fileWriter.close();
+    /**
+     * 补充primary = false
+     * @param filePath 文件路径
+     */
+    private static void changeInterfaceCodeForPrimary(String filePath) {
+
+        readAndWriteFile(filePath, lines -> {
+
+            List<String> result = new LinkedList<>();
+
+            for (int index = 0; index < lines.size(); index++) {
+
+                if (lines.get(index).contains("@FeignClient")) {
+                    result.add("@FeignClient(value = \"risk-market\", configuration = ChPayFeignSupportConfig.class, " +
+                            "primary = false)");
+                    index++;
+                }
+
+                result.add(lines.get(index));
+            }
+
+            return result;
+        });
     }
 
     /**
      * 给实现类补充@Primary注解
      * @param filePath 实现类地址
-     * @throws Exception
      */
-    private static void changeImplCode(String filePath) throws Exception {
+    private static void changeImplCode(String filePath) {
 
-        List<String> lines = getAllCode(filePath);
+        readAndWriteFile(filePath, lines -> {
 
-        List<String> result = new LinkedList<>();
+            List<String> result = new LinkedList<>();
 
-        for (int index = 0; index < lines.size(); index++) {
+            for (int index = 0; index < lines.size(); index++) {
 
-            String line = lines.get(index);
-            if (line.contains("import com.changhong.boot.ChPayRequestBody;")) {
-                result.add("import org.springframework.context.annotation.Primary;");
-            }
+                String line = lines.get(index);
+                if (line.contains("import com.changhong.boot.ChPayRequestBody;")) {
+                    result.add("import org.springframework.context.annotation.Primary;");
+                }
 
-            if (line.contains("@RestController")) {
+                if (line.contains("@RestController")) {
+                    result.add(line);
+                    line = lines.get(++index);
+                    result.add("@Primary");
+                }
+
+                if (line.contains("@Service") || line.contains("@Component")) {
+                    continue;
+                }
+
                 result.add(line);
-                line = lines.get(++index);
-                result.add("@Primary");
             }
 
-            if (line.contains("@Service") || line.contains("@Component")) {
-                continue;
-            }
-
-            result.add(line);
-        }
-
-        // 写入文件
-        FileWriter fileWriter = new FileWriter(filePath);
-        for (String str : result) {
-            fileWriter.write(str + '\n');
-        }
-
-        fileWriter.close();
+            return result;
+        });
     }
 
     /**
      * 递归添加文件名
-     * @param file 文件名/文件夹
+     * @param filePath 文件根路径
      * @param filesName 文件名列表
      */
-    private static void addFiles(File file, List<String> filesName) {
+    private static void addFiles(String filePath, List<String> filesName) {
+
+        File file = new File(filePath);
 
         if (!file.isDirectory()) {
             filesName.add(file.getAbsolutePath());
@@ -165,100 +178,95 @@ public class ChangeCode {
 
         for (File f : files) {
             if (f.isDirectory()) {
-                addFiles(f, filesName);
+                addFiles(filePath, filesName);
             } else {
                 filesName.add(f.getAbsolutePath());
             }
         }
     }
 
-    public static void changeImplCode(String filePath, List<String> methodsName) throws Exception {
+    public static void changeImplCode(String filePath, List<String> methodsName) {
 
-        List<String> lines = getAllCode(filePath);
+        readAndWriteFile(filePath, lines -> {
 
-        List<String> result = new LinkedList<>();
+            List<String> result = new LinkedList<>();
 
-        // 是否只补充@ChPayRequestBody注解
-        boolean isOnlyAddChPayRequestBody = false;
+            // 是否只补充@ChPayRequestBody注解
+            boolean isOnlyAddChPayRequestBody = false;
 
-        for (int index = 0; index < lines.size(); index++) {
+            for (int index = 0; index < lines.size(); index++) {
 
-            if (!isOnlyAddChPayRequestBody && lines.get(index).contains("ChPayMapping")) {
-                isOnlyAddChPayRequestBody = true;
-            }
+                if (!isOnlyAddChPayRequestBody && lines.get(index).contains("ChPayMapping")) {
+                    isOnlyAddChPayRequestBody = true;
+                }
 
-            // 补充导入的包
-            if (lines.get(index).contains("package")) {
+                // 补充导入的包
+                if (lines.get(index).contains("package")) {
+                    result.add(lines.get(index));
+                    result.add("");
+                    index++;
+                    index++;
+                    if (!isOnlyAddChPayRequestBody) {
+                        result.add("import com.changhong.boot.ChPayMapping;");
+                        result.add("import org.springframework.web.bind.annotation.RestController;");
+                        result.add("import org.springframework.context.annotation.Primary;");
+                    }
+                    result.add("import com.changhong.boot.ChPayRequestBody;");
+                }
+
+
+                if (!isOnlyAddChPayRequestBody && lines.get(index).startsWith("@Service")) {
+                    result.add("@RestController");
+                    result.add("@Primary");
+                    index++;
+                }
+
+                if (!isOnlyAddChPayRequestBody && lines.get(index).startsWith("@Component")) {
+                    index++;
+                }
+
+                // 统一去除@Override注解, 之后再补充, 防止有些实现方法没加@Override注解
+                if (lines.get(index).contains("@Override")) {
+                    index++;
+                    // 补充非接口方法的@Override注解和已经添加好的@Override注解
+                    boolean needAddOverride = needAddOverride(lines, index, methodsName);
+                    if (needAddOverride || isOnlyAddChPayRequestBody) {
+                        result.add("\t@Override");
+                    }
+                }
+
+                if (isInterfaceMethod(lines.get(index), methodsName)) {
+
+                    if (!isOnlyAddChPayRequestBody) {
+                        // 补充方法注解
+                        result.add("    @ChPayMapping");
+                        result.add("    @Override");
+                    }
+
+                    // 获取完整的方法代码
+                    String methodStr = lines.get(index);
+
+                    if (!methodStr.contains(")")) {
+                        do {
+                            index++;
+                            methodStr = methodStr.concat(lines.get(index));
+                        } while (!methodStr.contains("{"));
+                    }
+
+                    // 给方法参数添加注解
+                    dealMethod(methodStr, result);
+
+                    index++;
+                    if (index >= lines.size()) {
+                        break;
+                    }
+                }
+
                 result.add(lines.get(index));
-                result.add("");
-                index++;
-                index++;
-                if (!isOnlyAddChPayRequestBody) {
-                    result.add("import com.changhong.boot.ChPayMapping;");
-                    result.add("import org.springframework.web.bind.annotation.RestController;");
-                    result.add("import org.springframework.context.annotation.Primary;");
-                }
-                result.add("import com.changhong.boot.ChPayRequestBody;");
             }
 
-
-            if (!isOnlyAddChPayRequestBody && lines.get(index).startsWith("@Service")) {
-                result.add("@RestController");
-                result.add("@Primary");
-                index++;
-            }
-
-            if (!isOnlyAddChPayRequestBody && lines.get(index).startsWith("@Component")) {
-                index++;
-            }
-
-            // 统一去除@Override注解, 之后再补充, 防止有些实现方法没加@Override注解
-            if (lines.get(index).contains("@Override")) {
-                index++;
-                // 补充非接口方法的@Override注解和已经添加好的@Override注解
-                boolean needAddOverride = needAddOverride(lines, index, methodsName);
-                if (needAddOverride || isOnlyAddChPayRequestBody) {
-                    result.add("\t@Override");
-                }
-            }
-
-            if (isInterfaceMethod(lines.get(index), methodsName)) {
-
-                if (!isOnlyAddChPayRequestBody) {
-                    // 补充方法注解
-                    result.add("    @ChPayMapping");
-                    result.add("    @Override");
-                }
-
-                // 获取完整的方法代码
-                String methodStr = lines.get(index);
-
-                if (!methodStr.contains(")")) {
-                    do {
-                        index++;
-                        methodStr = methodStr.concat(lines.get(index));
-                    } while (!methodStr.contains("{"));
-                }
-
-                // 给方法参数添加注解
-                dealMethod(methodStr, result);
-
-                index++;
-                if (index >= lines.size()) {
-                    break;
-                }
-            }
-
-            result.add(lines.get(index));
-        }
-
-        // 写入文件
-        FileWriter fileWriter = new FileWriter(filePath);
-        for (String str : result) {
-            fileWriter.write(str + '\n');
-        }
-
-        fileWriter.close();
+            return result;
+        });
     }
 
     public static List<String> changeInterfaceCode(String filePath) throws Exception {
@@ -299,7 +307,7 @@ public class ChangeCode {
             // 补充接口注解
             if (lines.get(index).contains("public interface")) {
                 if (!isOnlyAddChPayRequestBody) {
-                    result.add("@FeignClient(value = \"aps-core-boot\", configuration = ChPayFeignSupportConfig" +
+                    result.add("@FeignClient(value = \"risk-market\", configuration = ChPayFeignSupportConfig" +
                             ".class, primary = false)");
                 }
                 interfaceLine = index;
@@ -380,12 +388,21 @@ public class ChangeCode {
      * @return 分行代码
      * @throws Exception 异常
      */
-    private static List<String> getAllCode(String filePath) throws Exception {
+    private static List<String> getAllCode(String filePath) {
 
         filePath = filePath.replaceAll("\\\\", "/");
         Path path = Paths.get(filePath);
 
-        return Files.readAllLines(path);
+        try {
+
+            return Files.readAllLines(path);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        throw new RuntimeException("文件写入失败");
+
     }
 
     /**
