@@ -1,6 +1,8 @@
 package com.java.tests;
 
 
+import java.lang.reflect.Field;
+
 public class ConsumeDto {
 
     private String tradeId;
@@ -29,5 +31,15 @@ public class ConsumeDto {
 
     public void setUnit(String unit) {
         this.unit = unit;
+    }
+
+    public static void main(String[] args) throws Exception {
+        ConsumeDto consumeDto = new ConsumeDto();
+        consumeDto.setAccountNum("ssss");
+
+        Class clazz =  consumeDto.getClass();
+        Field field = consumeDto.getClass().getDeclaredField("accountNum");
+        String s = (String) field.get(consumeDto);
+        System.out.println("");
     }
 }
