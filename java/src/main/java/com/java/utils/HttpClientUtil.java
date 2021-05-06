@@ -48,6 +48,8 @@ public class HttpClientUtil {
 	private final static String CONTENT_CHARSET = "UTF-8";
 	private final static int SO_TIMEOUT = 100000;
 
+	private static CloseableHttpClient httpClient = null;
+
 
 //	/**
 //	 * GET方式下载文件
@@ -140,28 +142,28 @@ public class HttpClientUtil {
 	 * @param data
 	 * @throws Exception
 	 */
-	public static String sendPost(String url,Map<String, String> data) throws Exception{
-		CloseableHttpClient httpClient = HttpClients.createDefault();
-		try{
-			HttpPost post = new HttpPost(url);
-			if(!CollectionUtils.isEmpty(data)){
-				List<NameValuePair> params = new ArrayList<>();
-				for (String key : data.keySet()) {
-					params.add(new BasicNameValuePair(key, data.get(key)));
-				}
-				HttpEntity fromEntity = new UrlEncodedFormEntity(params,CONTENT_CHARSET);
-				post.setEntity(fromEntity);
+	public static String sendPost(String url,Map<String, String> data) throws Exception {
+
+		if (httpClient == null) {
+			httpClient = HttpClients.createDefault();
+		}
+
+		HttpPost post = new HttpPost(url);
+		if(!CollectionUtils.isEmpty(data)){
+			List<NameValuePair> params = new ArrayList<>();
+			for (String key : data.keySet()) {
+				params.add(new BasicNameValuePair(key, data.get(key)));
 			}
-			HttpResponse response = httpClient.execute(post);
-			if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
-				return EntityUtils.toString(response.getEntity(),CONTENT_CHARSET);
-			}else{
-				throw new RuntimeException("调用URL地址通讯失败,失败状态：" + response.getStatusLine().getStatusCode());
-			}
-		}finally{
-			if(null != httpClient){
-				httpClient.close();
-			}
+			HttpEntity fromEntity = new UrlEncodedFormEntity(params,CONTENT_CHARSET);
+			post.setEntity(fromEntity);
+		}
+
+		HttpResponse response = httpClient.execute(post);
+
+		if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
+			return EntityUtils.toString(response.getEntity(),CONTENT_CHARSET);
+		}else{
+			throw new RuntimeException("调用URL地址通讯失败,失败状态：" + response.getStatusLine().getStatusCode());
 		}
 	}
 
