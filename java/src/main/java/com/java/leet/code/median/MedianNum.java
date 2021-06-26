@@ -1,4 +1,4 @@
-package com.java.leet.code;
+package com.java.leet.code.median;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,46 +18,63 @@ public class MedianNum {
             return calculateMiddleValue(nums1);
         }
 
-        if (nums1.length < nums2.length) {
-
-            int[] num3 = nums1;
-            nums1 = nums2;
-            nums2 = num3;
+        int[] resultIndex;
+        int totalLength = nums1.length+nums2.length;
+        if (totalLength % 2 == 0) {
+            resultIndex = new int[2];
+            resultIndex[0] = totalLength/2-1;
+            resultIndex[1] = totalLength/2;
+        } else {
+            resultIndex = new int[1];
+            resultIndex[0] = totalLength/2;
         }
 
-        List<Integer> middleValues = getMiddleValues(nums1);
+        int result;
+        int result2 = 0;
+        int num = -1;
+        int index1 = -1;
+        int index2 = -1;
+        while (true) {
 
-        if (middleValues.size() == 1) {
+            int indexTemp1 = index1 + 1;
+            int indexTemp2 = index2 + 1;
 
-            // 指定值的索引也是顺序数组中小于指定值的数字数量
-            int valueIndex = Utils.findTargetIndex(nums2, middleValues.get(0), false, false);
 
-            // 仅考虑需要查找的值不重复的情况, 有下面的结论, 并且大于需要查找值的数量和小于需要查找值的数量均包含需要查找值(如果数组
-            // 中存在指定值的话)
-            int lessThanMiddleValueNum = nums2.length - Utils.findTargetIndex(nums2, middleValues.get(0), false, true);
+            if (nums1.length <= indexTemp1) {
+                index2++;
+                result = nums2[indexTemp2];
 
-            // 另外一个数组中大于第一个数组中位数的数量和小于的数量相同, 则2数组合并后的中位数是第一个数组的中位数
-            if (valueIndex == lessThanMiddleValueNum) {
+            } else if (nums2.length <= indexTemp2) {
+                index1++;
+                result = nums1[indexTemp1];
+            } else if (nums1[indexTemp1] < nums2[indexTemp2]) {
+                index1++;
+                result = nums1[indexTemp1];
 
-                return middleValues.get(0);
+            } else {
+                index2++;
+                result = nums2[indexTemp2];
+            }
+            num++;
+
+            if (resultIndex.length == 1 && num == resultIndex[0]) {
+                return result;
             }
 
-            if (valueIndex > lessThanMiddleValueNum) {
-                int moreThanCounts = valueIndex - lessThanMiddleValueNum;
-
+            if (resultIndex.length == 2 && num == resultIndex[0]) {
+               result2 = result;
             }
 
+            if (resultIndex.length == 2 && num == resultIndex[1]) {
+                return divided(result, result2);
+            }
         }
-
-
-
-        return 0.1;
     }
 
-//    private List<Integer> getNums(int[] num, boolean isBig) {
-//
-//        List<Integer> list
-//    }
+    private static double divided(int num1, int num2) {
+
+        return (num1 + num2) / 2.0;
+    }
 
     /**
      * 获取已排序数组中位数值
@@ -138,17 +155,11 @@ public class MedianNum {
 
     public static void main(String[] args) {
 
-        int[] num1 = new int[]{1,2,3};
-        int[] num2 = new int[]{1,2,4,5};
+        int[] num1 = new int[]{0,0};
+        int[] num2 = new int[]{0,0};
 
-
-        int valueIndex = Utils.findTargetIndex(num2, 3, false, false);
-        System.out.println(valueIndex);
-
-        //        MedianNum medianNum = new MedianNum();
-//        System.out.println(medianNum.findMedianSortedArrays(num1, num2));
-
-//        int valueIndex = Utils.findTargetIndex(num2, 3);
+        MedianNum medianNum = new MedianNum();
+        System.out.println(medianNum.findMedianSortedArrays(num1, num2));
 
     }
 }

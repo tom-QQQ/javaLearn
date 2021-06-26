@@ -69,7 +69,7 @@ public class CreateSql {
      * @param para 小驼峰
      * @return 下划线
      */
-    private static String humpToUnderline(String para){
+    public static String humpToUnderline(String para){
         StringBuilder sb=new StringBuilder(para);
         //定位
         int temp=0;
