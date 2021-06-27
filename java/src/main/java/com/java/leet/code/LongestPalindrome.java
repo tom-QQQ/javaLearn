@@ -19,6 +19,7 @@ public class LongestPalindrome {
 
         int[] longestStr = new int[]{0, 1};
 
+        // 这里是为了处理边界有相同字符的情况, 后面的处理为了减少判断处理不到
         if (s.length() > 1) {
 
             if (s.charAt(0) == s.charAt(1)) {
@@ -90,16 +91,16 @@ public class LongestPalindrome {
             int left = i;
             int right = i;
 
-            // 向右寻找和当前索引处相同的字符串, 即aba中间的b的部分
+            // 向右寻找和当前索引处相同的字符, 即aba中间的b的部分
             while (right < s.length() -1 && s.charAt(right) == s.charAt(right+1)) {
                 ++right;
             }
-            // 下次在判断的时候从重复的下一个字符开始判断
+            // 下次在判断的时候从重复的下一个字符, 即不重复的字符开始判断
             i = right + 1;
 
-            // 向外寻找以中间相同部分对称的字符, 即aba两边b的部分
+            // 向外寻找以中间相同部分对称的字符, 即aba两边a的部分
             while (left > 0 && right < s.length() - 1 && s.charAt(left-1) == s.charAt(right+1)) {
-                ++left;
+                --left;
                 ++right;
             }
 
